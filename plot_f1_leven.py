@@ -14,7 +14,8 @@ def get_params_from_file_name(filename):
     `f1_exp_file_epochs_bs_noise_lr_dptype_cutofftype.results'"""
     # remove the `f1_exp_' from the filname
     filename = filename.replace('sentence_exp_', '')
-    filename = filename.replace('.results', '')    
+    filename = filename.replace('.results', '')
+    print(tuple(filename.split('_')))
     nk, _, epochs, bs, noise, lr, dptype, cutoff = tuple(filename.split('_'))
     cutoff = True if cutoff == 'cutoff' else False
     return nk, epochs, bs, noise, lr, dptype, cutoff
