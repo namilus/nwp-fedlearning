@@ -5,6 +5,8 @@ from pprint import pprint
 import datetime as dt
 from pathlib import Path
 import itertools as it
+from functools import reduce
+from operator import add
 
 import utils
 import gboard2
@@ -70,9 +72,14 @@ def main(args):
         generated_sentences.append((prefix, ((pp0 - pp1) / pp0).numpy()))                    
 
 
-    generated_sentences.sort(key=lambda x: x[1], reverse=True)
+    generated_sentences.sort(key=lambda x: x[1], reverse=True)    
     # take the top nk
     generated_sentences = generated_sentences[:len(sentences)]
+
+    # get the tokens used
+    tokens_used = list(set(reduce(add, [s[0] for s in generated_sentences])))
+    print("tokens used")
+    print(tokens_used)
     generated_sentences = [(' '.join([utils.token2word(gboard_symbols, t) for t in s[0][1:]]), s[1]) for s in generated_sentences]
     print(f"generated {len(generated_sentences)} sentences")
     for s in generated_sentences:
@@ -80,10 +87,10 @@ def main(args):
 
 
     leven = metrics.calc_leven_actual(sentences, [s[0] for s in generated_sentences])
-    f1 = metrics.f1(true_tokens, tf.expand_dims(extracted_tokens, axis=0)).numpy()
-    print(f"f1 {f1}, leven {leven}")
+    f1_tokens_used = metrics.f1(true_tokens, tf.expand_dims(tf.constant(tokens_used , dtype=tf.int64), axis=0)).numpy()
+    print(f"f1 tu {f1_tokens_used}, leven {leven}")
     write_results(output_f, sentences, extracted_tokens, [f"{s[0]} {s[1]:.2f}" for s in generated_sentences],
-                  leven, f1)
+                  leven, f1_tokens_used)
 
 
 if __name__ == "__main__":
