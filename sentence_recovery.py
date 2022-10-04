@@ -71,12 +71,13 @@ def main(args):
 
 
     generated_sentences.sort(key=lambda x: x[1], reverse=True)
+    # take the top nk
+    generated_sentences = generated_sentences[:len(sentences)]
     generated_sentences = [(' '.join([utils.token2word(gboard_symbols, t) for t in s[0][1:]]), s[1]) for s in generated_sentences]
     print(f"generated {len(generated_sentences)} sentences")
     for s in generated_sentences:
-        if s[1] < 0.5:
-            break
         print(s)
+
 
     leven = metrics.calc_leven_actual(sentences, [s[0] for s in generated_sentences])
     f1 = metrics.f1(true_tokens, tf.expand_dims(extracted_tokens, axis=0)).numpy()

@@ -31,9 +31,9 @@ def log_perplexity(embeddings, tokens, model):
 
 def calc_leven_actual(original_sentences, reconstructed_sentences):
     total = 0
-    for s in original_sentences:
-        total += max([leven(s.lower().split(' '), r.lower().split(' ')) for r in reconstructed_sentences])
-    return total / len(original_sentences)
+    for r in reconstructed_sentences:
+        total += max([leven(r.lower().split(' '), s.lower().split(' ')) for s in original_sentences])
+    return total / len(reconstructed_sentences)
 
 
 
