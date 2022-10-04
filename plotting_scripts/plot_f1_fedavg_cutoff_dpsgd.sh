@@ -1,0 +1,2 @@
+#!/bin/bash
+python3 plot_f1.py results/f1/f1_exp_256_0.txt_1000_32_0.0_0.001_None_cutoff.results results/f1/f1_exp_256_0.txt_1000_32_0.0001_0.001_DPSGD_cutoff.results results/f1/f1_exp_256_0.txt_1000_32_0.001_0.001_DPSGD_cutoff.results results/f1/f1_exp_256_0.txt_1000_32_0.01_0.001_DPSGD_cutoff.results results/f1/f1_exp_256_0.txt_1000_32_0.1_0.001_DPSGD_cutoff.results  --title "nk = 256, B = 32, DPSGD"

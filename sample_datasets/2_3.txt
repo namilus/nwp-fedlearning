@@ -1,0 +1,2 @@
+then export as pdf
+resolution is actually fine
