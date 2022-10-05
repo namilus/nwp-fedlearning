@@ -1,0 +1,110 @@
+import argparse as ap
+import random
+import math
+from pprint import pprint
+import datetime as dt
+from pathlib import Path
+import itertools as it
+from functools import reduce
+from operator import add
+
+import utils
+import gboard2
+import attack
+import metrics
+
+import tensorflow as tf
+from anytree import Node
+# setup gboard model
+interpreter = gboard2.gboard_interpreter("gboard/gboard.tflite")
+gboard_lstm = gboard2.create_gboard_lstm(interpreter)
+gboard_embedding = gboard2.create_gboard_embedding(interpreter)
+gboard_symbols = utils.load_symbols("gboard/gboard.syms")
+
+def write_results(outf, original, extracted_words, gen_sentences, leven, f1):
+    with outf.open('w') as f:
+        for s in original:
+            print(s, file=f)
+        print("", file=f)
+        print(*extracted_words, file=f)
+        for s in gen_sentences:
+            print(s, file=f)
+        print("", file=f)
+        print(f"{f1:.2f}, {leven:.2f}", file=f)
+        
+        
+
+
+def main(args):
+    sentences = list(utils.get_sentences(args.f))
+    true_tokens = utils.get_true_tokens(gboard_symbols, sentences)
+    dataset, input_shape = utils.sentences2dataset(gboard_embedding, gboard_symbols, sentences)
+    optimizer = tf.keras.optimizers.SGD(learning_rate=args.r)
+    gboard_lstm.build(input_shape=input_shape)
+    output_f = args.output_dir / f"scale_exp_{args.f.name}_scale{args.scale}.results"
+    gboard_lstm2 = gboard2.create_gboard_lstm(interpreter)
+    attack.train_model(gboard_lstm2, dataset, 1, optimizer)
+
+    extracted_tokens, _ = attack.extract_negative_tokens(gboard_lstm2, gboard_lstm)
+    extracted_tokens = extracted_tokens[0,:].numpy()
+
+
+    print(f"scaling by a factor of {args.scale}")
+    attack.scale_model(gboard_lstm, gboard_lstm2, args.scale)
+
+
+    prefixes = it.permutations(extracted_tokens, 1)
+    generated_sentences = []
+    for prefix in prefixes:
+        prefix = [1] + list(prefix)                                                             
+        prefix_embeddings = None                                                                
+        for _ in range(3):                                                                      
+            prefix_embeddings = utils.tokens2embeddings(gboard_embedding, tf.constant([prefix]))
+            next_words = attack.next_words(prefix_embeddings, gboard_lstm2, extracted_tokens)   
+            next_words.sort(key=lambda x: x[1], reverse=True)                                   
+            prefix.append(next_words[0][0])                                                     
+                                                                                                
+        token_indices = [[0, i, t] for i, t in enumerate(prefix[1:])]                           
+        pp0 = metrics.log_perplexity(prefix_embeddings, token_indices, gboard_lstm)             
+        pp1 = metrics.log_perplexity(prefix_embeddings, token_indices, gboard_lstm2)            
+        generated_sentences.append((prefix, ((pp0 - pp1) / pp0).numpy()))                    
+
+
+    generated_sentences.sort(key=lambda x: x[1], reverse=True)    
+    # take the top nk
+    generated_sentences = generated_sentences[:len(sentences)]
+
+    # get the tokens used
+    tokens_used = list(set(reduce(add, [s[0] for s in generated_sentences])))
+    print("tokens used")
+    print(tokens_used)
+    generated_sentences = [(' '.join([utils.token2word(gboard_symbols, t) for t in s[0][1:]]), s[1]) for s in generated_sentences]
+    print(f"generated {len(generated_sentences)} sentences")
+    for s in generated_sentences:
+        print(s)
+
+
+    leven = metrics.calc_leven_actual(sentences, [s[0] for s in generated_sentences])
+    f1_tokens_used = metrics.f1(true_tokens, tf.expand_dims(tf.constant(tokens_used , dtype=tf.int64), axis=0)).numpy()
+    print(f"f1 tu {f1_tokens_used}, leven {leven}")
+    write_results(output_f, sentences, extracted_tokens, [f"{s[0]} {s[1]:.2f}" for s in generated_sentences],
+                  leven, f1_tokens_used)
+
+
+if __name__ == "__main__":
+    parser = ap.ArgumentParser()
+    output_dirname = f"scale_exp_{str(dt.datetime.now()).replace(' ', '-')[:-7]}"
+    parser.add_argument("-f", type=Path, required=True) # dataset file
+    parser.add_argument('-r', type=float, default=1e-3) # learning rate
+    parser.add_argument('--scale', type=float, default=1)
+    # default pl and pt generate 4 word sentences
+    parser.add_argument('-pl', type=int, default=1) # initial prefix length
+    parser.add_argument('-pt', type=int, default=3) # total generation length.
+
+    parser.add_argument("-o", "--output-dir", type=Path, default=output_dirname)    
+    args = parser.parse_args()
+
+    if args.output_dir and not args.output_dir.exists():
+        print(f'--output-dir {args.output_dir} does not exist, creating it...')
+        args.output_dir.mkdir(parents=True)
+    main(args)
