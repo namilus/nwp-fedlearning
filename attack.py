@@ -75,10 +75,10 @@ def add_noise_to_model_weights(model, mean=0, stddev=0):
 
 @tf.function        
 def extract_negative_tokens(m1, m2):
-    """Subtracts model `m2''s weights from `m1''s weights, and returns
-    the indices in the final layer bias of the negative values. If
-    true tokens is provided, it uses those to find the best magntidude
-    cutoff to remove the noisily flipped words
+    """Subtracts model m2 - m1, and returns the indices in the final
+    layer bias of the negative values. If true tokens is provided, it
+    uses those to find the best magntidude cutoff to remove the
+    noisily flipped words
 
     """
     m1_final = m1.trainable_weights[-1]
@@ -126,3 +126,18 @@ def next_words(prefix, model, tokens):
     probabilities = [(t, p/total) for (t, p) in probabilities]
     return probabilities
 
+
+
+def scale_model(m1, m2, factor=1):
+    """Takes the difference between two models m2 - m1 and applies
+    (adds) it to m2 factor times
+
+    """
+    difference = []
+    for m1_weight, m2_weight in zip(m1.trainable_weights, m2.trainable_weights):
+        difference.append(m2_weight - m1_weight)
+
+    for layer, change in zip(m2.trainable_weights, difference) :
+        layer.assign_add(change * factor)
+    
+    
