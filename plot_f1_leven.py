@@ -9,9 +9,12 @@ import numpy as np
 
 
 
-def get_params_from_file_name(filename):
+def get_params_from_file_name(filename, scaled=False):
     """Assumes the filename to be of the format
     `f1_exp_file_epochs_bs_noise_lr_dptype_cutofftype.results'"""
+    if scaled:
+        _, _, nk, _, _ = tuple(filename.split('_'))
+        return nk
     # remove the `f1_exp_' from the filname
     filename = filename.replace('sentence_exp_', '')
     filename = filename.replace('.results', '')
@@ -34,7 +37,11 @@ def read_results(path):
 def main(args):
     results = {}
     for path in args.results_files:
-        nk, _, _, _, _, _, _ = get_params_from_file_name(path.name)
+        nk = None
+        if not args.scaled:
+            nk, _, _, _, _, _, _ = get_params_from_file_name(path.name)
+        else:
+            nk = get_params_from_file_name(path.name, args.scaled)
         metrics = read_results(path)
         if args.group_by == "nk":
             if nk in results:
@@ -66,5 +73,8 @@ if __name__ == "__main__":
     parser.add_argument('results_files', type=Path, nargs='+')
     parser.add_argument('--group-by', type=str, default="nk")
     parser.add_argument('-t', '--title', type=str, default="")
+    parser.add_argument('--scaled', action="store_true", default=False)
     args = parser.parse_args()
+
+    print(args.scaled)
     main(args)

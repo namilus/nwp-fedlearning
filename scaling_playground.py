@@ -59,26 +59,31 @@ def generate_sentences(nk):
     tokens_used = list(set(reduce(add, [s[0] for s in generated_sentences])))
 
     generated_sentences = [(' '.join([utils.token2word(gboard_symbols, t) for t in s[0][1:]]), s[1]) for s in generated_sentences]
-    print(f"\ngenerated {len(generated_sentences)} sentences\n")
-    for s in generated_sentences:
-        print(s)
+    # print(f"\ngenerated {len(generated_sentences)} sentences\n")
+    # for s in generated_sentences:
+    #     print(s)
         
     leven = metrics.calc_leven_actual(sentences, [s[0] for s in generated_sentences])
     f1_tokens_used = metrics.f1(true_tokens, tf.expand_dims(tf.constant(tokens_used , dtype=tf.int64), axis=0)).numpy()
 
-    print(f"f1 tu {f1_tokens_used}, leven {leven}")
-    return generated_sentences
+    # print(f"f1 tu {f1_tokens_used}, leven {leven}")
+    return generated_sentences, f1_tokens_used, leven
 
 
 
 
 def main():
-    print("no scaling")
-    generate_sentences(8)
+    nk = 8
+    scale = 10
+    attack.scale_model(gboard_lstm, gboard_lstm2, scale)
+    _, f1, leven = generate_sentences(nk)
+    print((f1, leven))
+    # print("no scaling")
+    # generate_sentences(8)
 
-    print("\nscale by 200\n")
-    attack.scale_model(gboard_lstm, gboard_lstm2, 200)
-    generate_sentences(8)
+    # print("\nscale by 200\n")
+    # attack.scale_model(gboard_lstm, gboard_lstm2, 200)
+    # generate_sentences(8)
 
 
 
