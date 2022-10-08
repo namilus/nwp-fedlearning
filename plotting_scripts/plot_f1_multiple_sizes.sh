@@ -1,1 +1,4 @@
+
 python3 plot_f1.py results/f1/f1_exp_128_0.txt_1000_32_0.0_0.001_None_nocutoff.results results/f1/f1_exp_16_0.txt_1000_16_0.0_0.001_None_nocutoff.results results/f1/f1_exp_256_0.txt_1000_32_0.0_0.001_None_nocutoff.results results/f1/f1_exp_32_0.txt_1000_32_0.0_0.001_None_nocutoff.results results/f1/f1_exp_64_0.txt_1000_32_0.0_0.001_None_nocutoff.results --title "Varying nk, B = 32, No noise" --group-by nk
+
+python3 plot_f1.py results/f1/f1_exp_16_0.txt_1000_16_0.0_0.001_None_nocutoff.results results/f1/f1_exp_64_0.txt_1000_64_0.0_0.001_None_nocutoff.results results/f1/f1_exp_32_0.txt_1000_32_0.0_0.001_None_nocutoff.results results/f1/f1_exp_256_0.txt_1000_256_0.0_0.001_None_nocutoff.results results/f1/f1_exp_128_0.txt_1000_128_0.0_0.001_None_nocutoff.results --title "Varying nk, B = nk, No noise" --group-by nk
