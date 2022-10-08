@@ -53,9 +53,11 @@ def main(args):
     if not args.single:
         colors = cm.rainbow(np.linspace(0, 1, len(args.results_files)))
         for color, path in zip(colors, args.results_files):
-            _, _, _, noise, _, _, _ = get_params_from_file_name(path.name)
+            nk, _, _, noise, _, _, _ = get_params_from_file_name(path.name)
             x, y = read_results(path)
-            plt.plot(x, y, color=color, label=f"sigma = {noise}")
+            print(nk)
+            pprint((x,y))
+            plt.plot(x, y, color=color, label=f"{args.group_by if args.group_by else 'sigma'} = {nk if args.group_by == 'nk' else noise}")
         plt.legend()
         plt.xlabel("epochs")
         plt.ylabel("f1")
