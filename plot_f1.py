@@ -11,7 +11,7 @@ import matplotlib.cm as cm
 import numpy as np
 
 
-
+plt.rcParams.update({'font.size': 12})
 
 def read_data(paths, group_by):
     """ For when we are plotting single epoch points not lines """

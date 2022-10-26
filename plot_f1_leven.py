@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import numpy as np
 # { nk : [(f1, leven) ...] }
-
+plt.rcParams.update({'font.size': 12})
 
 
 def get_params_from_file_name(filename, scaled=False):

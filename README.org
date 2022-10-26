@@ -1,0 +1,4 @@
+For an example, run the file =example.py=:
+#+begin_src sh
+python3 example.py
+#+end_src
