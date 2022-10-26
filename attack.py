@@ -23,6 +23,14 @@ CCE = tf.keras.losses.CategoricalCrossentropy(reduction=tf.keras.losses.Reductio
 
 
 @tf.function(jit_compile=True)
+def gradient_func(lstm, x, y, loss=CCE):
+    with tf.GradientTape() as tape:
+        logits = lstm(x)
+        loss_value = loss(y, logits)
+    return tape.gradient(loss_value, lstm.trainable_weights)
+
+
+@tf.function(jit_compile=True)
 def train_step(x, y, lstm, optimizer, loss=CCE, dp_type=None, dp_stddev=0.0):
     with tf.GradientTape() as tape:
         logits = lstm(x)
@@ -141,3 +149,13 @@ def scale_model(m1, m2, factor=1):
         layer.assign_add(change * factor)
     
     
+
+
+@tf.function
+def loss(dg, og):
+    # print("retracing loss fn...")
+    grad_diff = 0
+    for gx, gy in zip(dg, og):
+        grad_diff += tf.norm(tf.math.subtract(gx, gy)) ** 2
+    return grad_diff
+        
